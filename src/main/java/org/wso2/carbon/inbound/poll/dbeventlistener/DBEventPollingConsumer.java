@@ -284,7 +284,7 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
     private String buildQuery(String tableName, String filteringCriteria, String filteringColumnName,
             String lastUpdatedTimestampFromRegistry) {
         if (filteringCriteria.equals(DBEventConstants.DB_FILTERING_BY_TIMESTAMP)) {
-            return "SELECT * FROM " + tableName + " WHERE " + filteringColumnName + " > '"
+            return "SELECT * FROM " + tableName + " WHERE " + filteringColumnName + " >= '"
                     + lastUpdatedTimestampFromRegistry + "' ORDER BY " + filteringColumnName;
         } else if (filteringCriteria.equals(DBEventConstants.DB_FILTERING_BY_BOOLEAN)){
             return "SELECT * FROM " + tableName + " WHERE " + filteringColumnName + "='true'";
