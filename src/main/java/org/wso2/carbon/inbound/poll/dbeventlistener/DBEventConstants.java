@@ -30,7 +30,7 @@ public class DBEventConstants {
     public static final String REGISTRY_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
     public static final String SET_ROLLBACK_ONLY = "SET_DB_ROLLBACK_ONLY";
     public static final String REGISTRY_PATH = "registryPath";
-    public static final String TABLE_PRIMARY_KEYS = "primaryKeys";
+    public static final String TABLE_PRIMARY_KEY = "primaryKey";
     public static final String CONNECTION_VALIDATION_QUERY = "connectionValidationQuery";
 }
 

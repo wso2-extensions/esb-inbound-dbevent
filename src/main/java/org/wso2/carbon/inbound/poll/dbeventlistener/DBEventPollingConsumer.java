@@ -30,17 +30,7 @@ import org.wso2.carbon.base.MultitenantConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.inbound.endpoint.protocol.generic.GenericPollingConsumer;
 
-import java.sql.DatabaseMetaData;
-import java.sql.SQLException;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.Statement;
-import java.sql.DriverManager;
-import java.sql.Types;
-
-import java.util.Arrays;
-import java.util.List;
+import java.sql.*;
 import java.util.Properties;
 
 public class DBEventPollingConsumer extends GenericPollingConsumer {
@@ -57,8 +47,10 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
     private MessageContext msgCtx;
     private String registryPath = null;
     private String inboundName = null;
-    private String[] primaryKeysFromConfig = null;
+    private String[] primaryKeyFromConfig = null;
     private String connectionValidationQuery = null;
+    private String tableName = null;
+
 
     /**
      * @param properties
@@ -80,7 +72,7 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
         filteringCriteria = properties.getProperty(DBEventConstants.DB_FILTERING_CRITERIA);
         filteringColumnName = properties.getProperty(DBEventConstants.DB_FILTERING_COLUMN_NAME);
         registryPath = properties.getProperty(DBEventConstants.REGISTRY_PATH);
-        primaryKeysFromConfig = properties.getProperty(DBEventConstants.TABLE_PRIMARY_KEYS).split(",");
+        primaryKeyFromConfig = properties.getProperty(DBEventConstants.TABLE_PRIMARY_KEY).split(",");
         connectionValidationQuery = properties.getProperty(DBEventConstants.CONNECTION_VALIDATION_QUERY);
         if(StringUtils.isEmpty(registryPath)) {
             registryPath = name;
@@ -89,6 +81,7 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
             connectionValidationQuery = "SELECT 1";
         }
         inboundName = name;
+        tableName = properties.getProperty(DBEventConstants.DB_TABLE);
     }
 
     /**
@@ -177,7 +170,6 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
         String deleteQuery = null;
         String updateQuery = null;
         String lastProcessedTimestamp = null;
-        String tableName = properties.getProperty(DBEventConstants.DB_TABLE);
         DBEventRegistryHandler dbEventListnerRegistryHandler = new DBEventRegistryHandler();
         String lastUpdatedTimestampFromRegistry = null;
         if (filteringCriteria.equals(DBEventConstants.DB_FILTERING_BY_TIMESTAMP)) {
@@ -192,7 +184,6 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
             statement = connection.prepareStatement(dbScript);
             rs = statement.executeQuery(dbScript);
             ResultSetMetaData metaData = rs.getMetaData();
-            List<String> primaryKeys = Arrays.asList(primaryKeysFromConfig);
             while (rs.next()) {
                 if (filteringCriteria.equals(DBEventConstants.DB_DELETE_AFTER_POLL)) {
                     if (log.isDebugEnabled()) {
@@ -212,10 +203,10 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
                     String columnName = metaData.getColumnName(i);
                     int type = metaData.getColumnType(i);
                     String columnValue = getColumnValue(rs, columnName, type);
-                    if (StringUtils.isNotEmpty(deleteQuery) && primaryKeys.contains(columnName)) {
-                        deleteQuery += columnName + "='" + columnValue + "' AND ";
-                    } else if (StringUtils.isNotEmpty(updateQuery) && primaryKeys.contains(columnName)) {
-                        updateQuery += columnName + "='" + columnValue + "' AND ";
+                    if (StringUtils.isNotEmpty(deleteQuery) && primaryKeyFromConfig.equals(columnName)) {
+                        deleteQuery += columnName + "='" + columnValue;
+                    } else if (StringUtils.isNotEmpty(updateQuery) && primaryKeyFromConfig.equals(columnName)) {
+                        updateQuery += columnName + "='" + columnValue;
                     }
                     if (filteringCriteria.equals(DBEventConstants.DB_FILTERING_BY_TIMESTAMP) && columnName
                             .equals(filteringColumnName)) {
@@ -224,11 +215,6 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
                     OMElement messageElement = factory.createOMElement(columnName, null);
                     messageElement.setText(columnValue);
                     result.addChild(messageElement);
-                }
-                if (StringUtils.isNotEmpty(deleteQuery)) {
-                    deleteQuery = deleteQuery.substring(0, deleteQuery.lastIndexOf(" AND "));
-                } else if (StringUtils.isNotEmpty(updateQuery)) {
-                    updateQuery = updateQuery.substring(0, updateQuery.lastIndexOf(" AND "));
                 }
                 this.inject(result, deleteQuery, updateQuery, lastProcessedTimestamp);
             }
