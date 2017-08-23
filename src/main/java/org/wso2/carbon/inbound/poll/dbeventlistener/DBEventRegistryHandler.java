@@ -38,7 +38,6 @@ public class DBEventRegistryHandler {
     private static final Log log = LogFactory.getLog(DBEventRegistryHandler.class.getName());
     private Resource resource;
     private Registry registry;
-    private Object obj;
 
     public DBEventRegistryHandler() {
         try {
@@ -49,6 +48,7 @@ public class DBEventRegistryHandler {
     }
 
     public Object readFromRegistry(String resourcePath) {
+        Object obj = null;
         try {
             if (registry.resourceExists(resourcePath)) {
                 resource = registry.get(resourcePath);

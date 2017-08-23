@@ -30,12 +30,6 @@ import org.wso2.carbon.base.MultitenantConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.inbound.endpoint.protocol.generic.GenericPollingConsumer;
 
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.List;
-import java.util.Properties;
-
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.sql.Connection;
@@ -44,6 +38,10 @@ import java.sql.ResultSetMetaData;
 import java.sql.Statement;
 import java.sql.DriverManager;
 import java.sql.Types;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
 
 public class DBEventPollingConsumer extends GenericPollingConsumer {
 
@@ -90,6 +88,9 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
         if(StringUtils.isEmpty(registryPath)) {
             registryPath = name;
         }
+        if(StringUtils.isEmpty(connectionValidationQuery)) {
+            connectionValidationQuery = "SELECT 1";
+        }
         inboundName = name;
     }
 
@@ -99,8 +100,9 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
      * @param object
      * @return status
      */
-    public boolean inject(OMElement object) {
-        Statement statement;
+    private boolean inject(OMElement object) {
+        Statement statement = null;
+        String query = null;
         DBEventRegistryHandler dbEventListnerRegistryHandler = new DBEventRegistryHandler();
         msgCtx = createMessageContext();
         if (injectingSeq == null || injectingSeq.equals("")) {
@@ -110,7 +112,6 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
         }
         SequenceMediator seq = (SequenceMediator) synapseEnvironment.getSynapseConfiguration()
                 .getSequence(injectingSeq);
-        String query = null;
         try {
             msgCtx.getEnvelope().getBody().addChild(object);
             if (seq != null) {
@@ -143,6 +144,14 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
             }
         } catch (SQLException e) {
             log.error("Error while capturing the change data " + query, e);
+        } finally {
+            try {
+                if (statement != null) {
+                    statement.close();
+                }
+            } catch (SQLException sqle) {
+                log.error("Error while closing the SQL statement.", sqle);
+            }
         }
         return true;
     }
@@ -207,9 +216,9 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
                     messageElement.setText(columnValue);
                     result.addChild(messageElement);
                 }
-                if (StringUtils.isNotEmpty(deleteQuery) && deleteQuery.lastIndexOf(" AND ") > 0) {
+                if (StringUtils.isNotEmpty(deleteQuery)) {
                     deleteQuery = deleteQuery.substring(0, deleteQuery.lastIndexOf(" AND "));
-                } else if (StringUtils.isNotEmpty(updateQuery) && updateQuery.lastIndexOf(" AND ") > 0) {
+                } else if (StringUtils.isNotEmpty(updateQuery)) {
                     updateQuery = updateQuery.substring(0, updateQuery.lastIndexOf(" AND "));
                 }
                 this.inject(result);
@@ -218,16 +227,16 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
             log.error("Error while capturing the change data " + dbScript, e);
         } finally {
             try {
+                rs.close();
+            } catch (SQLException e) {
+                log.error("Error while closing the result set.");
+            }
+            try {
                 if (statement != null) {
                     statement.close();
                 }
             } catch (SQLException sqle) {
                 log.error("Error while closing the SQL statement.", sqle);
-            }
-            try {
-                rs.close();
-            } catch (SQLException e) {
-                log.error("Error while closing the result set.");
             }
         }
     }
@@ -363,16 +372,16 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
             return false;
         } finally {
             try {
+                rs.close();
+            } catch (SQLException e) {
+                log.error("Error while closing the result set.");
+            }
+            try {
                 if (statement != null) {
                     statement.close();
                 }
             } catch (SQLException sqle) {
                 log.error("Error while closing the SQL statement.", sqle);
-            }
-            try {
-                rs.close();
-            } catch (SQLException e) {
-                log.error("Error while closing the result set.");
             }
         }
         return false;
