@@ -30,7 +30,15 @@ import org.wso2.carbon.base.MultitenantConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.inbound.endpoint.protocol.generic.GenericPollingConsumer;
 
-import java.sql.*;
+import java.sql.DatabaseMetaData;
+import java.sql.SQLException;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.Statement;
+import java.sql.DriverManager;
+import java.sql.Types;
+
 import java.util.Properties;
 
 public class DBEventPollingConsumer extends GenericPollingConsumer {
