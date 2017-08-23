@@ -55,9 +55,6 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
     private String filteringCriteria;
     private Connection connection = null;
     private MessageContext msgCtx;
-    private String deleteQuery = null;
-    private String updateQuery = null;
-    private String lastProcessedTimestamp = null;
     private String registryPath = null;
     private String inboundName = null;
     private String[] primaryKeysFromConfig = null;
@@ -100,7 +97,7 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
      * @param object
      * @return status
      */
-    private boolean inject(OMElement object) {
+    private boolean inject(OMElement object, String deleteQuery, String updateQuery, String lastProcessedTimestamp) {
         Statement statement = null;
         String query = null;
         DBEventRegistryHandler dbEventListnerRegistryHandler = new DBEventRegistryHandler();
@@ -117,7 +114,7 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
             if (seq != null) {
                 seq.setErrorHandler(onErrorSeq);
                 if (log.isDebugEnabled()) {
-                    log.info("injecting message to sequence : " + injectingSeq);
+                    log.info("Injecting message to sequence : " + injectingSeq);
                 }
                 synapseEnvironment.injectInbound(msgCtx, seq, sequential);
             } else {
@@ -157,6 +154,9 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
     }
 
     private MessageContext createMessageContext() {
+        if (log.isDebugEnabled()) {
+            log.info("Creating message context.");
+        }
         MessageContext msgCtx = synapseEnvironment.createMessageContext();
         org.apache.axis2.context.MessageContext axis2MsgCtx = ((org.apache.synapse.core.axis2.Axis2MessageContext) msgCtx)
                 .getAxis2MessageContext();
@@ -174,6 +174,9 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
     private void fetchDataAndInject() {
         Statement statement = null;
         ResultSet rs = null;
+        String deleteQuery = null;
+        String updateQuery = null;
+        String lastProcessedTimestamp = null;
         String tableName = properties.getProperty(DBEventConstants.DB_TABLE);
         DBEventRegistryHandler dbEventListnerRegistryHandler = new DBEventRegistryHandler();
         String lastUpdatedTimestampFromRegistry = null;
@@ -192,8 +195,14 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
             List<String> primaryKeys = Arrays.asList(primaryKeysFromConfig);
             while (rs.next()) {
                 if (filteringCriteria.equals(DBEventConstants.DB_DELETE_AFTER_POLL)) {
+                    if (log.isDebugEnabled()) {
+                        log.info("Building the DELETE query.");
+                    }
                     deleteQuery = "DELETE FROM " + tableName + " WHERE ";
                 } else if (filteringCriteria.equals(DBEventConstants.DB_FILTERING_BY_BOOLEAN)) {
+                    if (log.isDebugEnabled()) {
+                        log.info("Building the UPDATE query.");
+                    }
                     updateQuery = "UPDATE " + tableName + " SET " + filteringColumnName + "='false'" + " WHERE ";
                 }
                 OMFactory factory = OMAbstractFactory.getOMFactory();
@@ -221,7 +230,7 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
                 } else if (StringUtils.isNotEmpty(updateQuery)) {
                     updateQuery = updateQuery.substring(0, updateQuery.lastIndexOf(" AND "));
                 }
-                this.inject(result);
+                this.inject(result, deleteQuery, updateQuery, lastProcessedTimestamp);
             }
         } catch (SQLException e) {
             log.error("Error while capturing the change data " + dbScript, e);
@@ -242,6 +251,9 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
     }
 
     private String getColumnValue(ResultSet rs, String columnName, int type) {
+        if (log.isDebugEnabled()) {
+            log.info("Getting the value of the column by the column name.");
+        }
         String columnValue = null;
         try {
             if (type == Types.VARCHAR || type == Types.CHAR) {
@@ -292,6 +304,9 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
      */
     private String buildQuery(String tableName, String filteringCriteria, String filteringColumnName,
             String lastUpdatedTimestampFromRegistry) {
+        if (log.isDebugEnabled()) {
+            log.info("Building the SELECT query to fetch the data change.");
+        }
         if (filteringCriteria.equals(DBEventConstants.DB_FILTERING_BY_TIMESTAMP)) {
             return "SELECT * FROM " + tableName + " WHERE " + filteringColumnName + " >= '"
                     + lastUpdatedTimestampFromRegistry + "' ORDER BY " + filteringColumnName;
@@ -304,6 +319,9 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
 
     @Override
     public void destroy() {
+        if (log.isDebugEnabled()) {
+            log.info("Destroying the inbound endpoint " + inboundName);
+        }
         try {
             if (connection != null) {
                 connection.close();
@@ -317,6 +335,9 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
      * Create the database connection
      */
     private void createConnection() {
+        if (log.isDebugEnabled()) {
+            log.info("Creating the database connection.");
+        }
         try {
             Class.forName(driverClass);
             connection = DriverManager.getConnection(dbURL, dbUsername, dbPassword);
@@ -329,6 +350,9 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
 
     @Override
     public Object poll() {
+        if (log.isDebugEnabled()) {
+            log.info("Polling the data.");
+        }
         try {
             if (connection == null || connection.isClosed()) {
                 createConnection();
@@ -344,6 +368,9 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
      * Check whether the message should be rolled back or not.
      */
     private boolean isRollback(MessageContext msgCtx) {
+        if (log.isDebugEnabled()) {
+            log.info("Checking for the ROLLBACK condition.");
+        }
         Object rollbackProp = msgCtx.getProperty(DBEventConstants.SET_ROLLBACK_ONLY);
         if (rollbackProp != null) {
             if ((rollbackProp instanceof Boolean && ((Boolean) rollbackProp))
@@ -359,6 +386,9 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
      * @return status of the connection
      */
     private boolean isConnectionAlive() {
+        if (log.isDebugEnabled()) {
+            log.info("Checking the connection status.");
+        }
         Statement statement = null;
         ResultSet rs = null;
         try {

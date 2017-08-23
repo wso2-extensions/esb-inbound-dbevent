@@ -48,6 +48,9 @@ public class DBEventRegistryHandler {
     }
 
     public Object readFromRegistry(String resourcePath) {
+        if (log.isDebugEnabled()) {
+            log.info("Reading the registry property from the path " + resourcePath);
+        }
         Object obj = null;
         try {
             if (registry.resourceExists(resourcePath)) {
@@ -55,6 +58,9 @@ public class DBEventRegistryHandler {
                 byte[] content = (byte[]) resource.getContent();
                 obj = toObject(content);
             } else {
+                if (log.isDebugEnabled()) {
+                    log.info("Getting the default timestamp as the property is not set in the registry.");
+                }
                 String defaultTimestamp = getDefaultTimestamp();
                 writeToRegistry(resourcePath, defaultTimestamp);
                 return defaultTimestamp;
@@ -102,6 +108,9 @@ public class DBEventRegistryHandler {
     }
 
     public void writeToRegistry(String resourceID, Object date) {
+        if (log.isDebugEnabled()) {
+            log.info("Reading the registry property "+ date +" to the path " + resourceID);
+        }
         try {
             resource = registry.newResource();
             resource.setContent(toByteArray(date));
