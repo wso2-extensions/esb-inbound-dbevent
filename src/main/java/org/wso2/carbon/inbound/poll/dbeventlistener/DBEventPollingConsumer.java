@@ -375,6 +375,9 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
         Statement statement = null;
         ResultSet rs = null;
         try {
+            if (connection == null || connection.isClosed()) {
+                createConnection();
+            }
             statement = connection.prepareStatement(connectionValidationQuery);
             rs = statement.executeQuery(connectionValidationQuery);
             if(rs == null || rs.first()) {
