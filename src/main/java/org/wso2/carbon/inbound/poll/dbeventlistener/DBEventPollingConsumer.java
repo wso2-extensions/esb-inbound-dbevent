@@ -30,7 +30,6 @@ import org.wso2.carbon.base.MultitenantConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.inbound.endpoint.protocol.generic.GenericPollingConsumer;
 
-import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -127,9 +126,6 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
                 if (filteringCriteria.equals(DBEventConstants.DB_FILTERING_BY_TIMESTAMP)) {
                     dbEventListnerRegistryHandler.writeToRegistry(registryPath, lastProcessedTimestamp);
                 }
-                if(!isConnectionAlive()) {
-                    createConnection();
-                }
                 if (StringUtils.isNotEmpty(deleteQuery)) {
                     statement = connection.prepareStatement(deleteQuery);
                     query = deleteQuery;
@@ -186,9 +182,6 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
         String dbScript = buildQuery(tableName, filteringCriteria,
                 filteringColumnName, lastUpdatedTimestampFromRegistry);
         try {
-            if(!isConnectionAlive()) {
-                createConnection();
-            }
             statement = connection.prepareStatement(dbScript);
             rs = statement.executeQuery(dbScript);
             ResultSetMetaData metaData = rs.getMetaData();
@@ -303,7 +296,7 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
         }
         if (filteringCriteria.equals(DBEventConstants.DB_FILTERING_BY_TIMESTAMP)) {
             return "SELECT * FROM " + tableName + " WHERE " + filteringColumnName + " >= '"
-                    + lastUpdatedTimestampFromRegistry + "' ORDER BY " + filteringColumnName;
+                    + lastUpdatedTimestampFromRegistry + "' ORDER BY " + filteringColumnName + " ASC ";
         } else if (filteringCriteria.equals(DBEventConstants.DB_FILTERING_BY_BOOLEAN)){
             return "SELECT * FROM " + tableName + " WHERE " + filteringColumnName + "='true'";
         } else {
@@ -347,14 +340,10 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
         if (log.isDebugEnabled()) {
             log.info("Polling the data.");
         }
-        try {
-            if (connection == null || connection.isClosed()) {
-                createConnection();
-            }
-            fetchDataAndInject();
-        } catch (SQLException e) {
-            log.error("Error while checking the connection.", e);
+        if (!isConnectionAlive()) {
+            createConnection();
         }
+        fetchDataAndInject();
         return null;
     }
 
