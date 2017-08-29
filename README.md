@@ -48,14 +48,14 @@ Tested Platform:
       <parameter name="tableName">CDC_CUSTOM</parameter>
       <parameter name="filteringCriteria">byLastUpdatedTimestampColumn</parameter>
       <parameter name="filteringColumnName">LAST_UPDATED_DATE_TIME</parameter>
-      <parameter name="primaryKeys">ID</parameter>
+      <parameter name="primaryKey">ID</parameter>
       <parameter name="connectionValidationQuery">SELECT 1</parameter>
       <parameter name="registryPath">customIE/timestamp</parameter>
    </parameters>
 </inboundEndpoint>
 
 1. driverName                - The class name of the database driver.
-2. url	                     - The JDBC URL of the database.
+2. url	                      - The JDBC URL of the database.
 3. username                  - The user name used to connect to the database.
 4. password                  - The password used to connect to the database.
 5. tableName                 - The name of the table to capture the change.
