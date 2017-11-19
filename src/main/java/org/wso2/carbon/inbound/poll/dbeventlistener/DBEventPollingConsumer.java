@@ -54,7 +54,7 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
     private MessageContext msgCtx;
     private String registryPath = null;
     private String inboundName = null;
-    private String[] primaryKeyFromConfig = null;
+    private String primaryKeyFromConfig = null;
     private String connectionValidationQuery = null;
     private String tableName = null;
 
@@ -79,7 +79,7 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
         filteringCriteria = properties.getProperty(DBEventConstants.DB_FILTERING_CRITERIA);
         filteringColumnName = properties.getProperty(DBEventConstants.DB_FILTERING_COLUMN_NAME);
         registryPath = properties.getProperty(DBEventConstants.REGISTRY_PATH);
-        primaryKeyFromConfig = properties.getProperty(DBEventConstants.TABLE_PRIMARY_KEY).split(",");
+        primaryKeyFromConfig = properties.getProperty(DBEventConstants.TABLE_PRIMARY_KEY);
         connectionValidationQuery = properties.getProperty(DBEventConstants.CONNECTION_VALIDATION_QUERY);
         if(StringUtils.isEmpty(registryPath)) {
             registryPath = name;
