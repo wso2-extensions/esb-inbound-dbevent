@@ -61,6 +61,6 @@ Tested Platform:
 5. tableName                 - The name of the table to capture the change.
 6. filteringCriteria         - It can be one of these byLastUpdatedTimestampColumn or byBooleanColumn or deleteAfterPoll.
 7. filteringColumnName       - The actual name of table column. It must be set if the filteringCriteria has the value 'byLastUpdatedTimestampColumn' or 'byBooleanColumn'.
-8. primaryKeys               - Comma separated primary key column names.
+8. primaryKey                - The primary key column name.
 9. connectionValidationQuery - The query to check the availability of the connection.
 10. registryPath             - The registry path of the timestamp. This will be used to retrieve the records when the filteringCriteria has the value 'byLastUpdatedTimestampColumn'.
