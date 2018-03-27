@@ -205,9 +205,9 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
                     int type = metaData.getColumnType(i);
                     String columnValue = getColumnValue(rs, columnName, type);
                     if (StringUtils.isNotEmpty(deleteQuery) && primaryKeyFromConfig.equals(columnName)) {
-                        deleteQuery += columnName + "='" + columnValue;
+                        deleteQuery += columnName + "='" + columnValue + "'";
                     } else if (StringUtils.isNotEmpty(updateQuery) && primaryKeyFromConfig.equals(columnName)) {
-                        updateQuery += columnName + "='" + columnValue;
+                        updateQuery += columnName + "='" + columnValue + "'";
                     }
                     if (filteringCriteria.equals(DBEventConstants.DB_FILTERING_BY_TIMESTAMP) && columnName
                             .equals(filteringColumnName)) {

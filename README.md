@@ -27,10 +27,10 @@ Tested Platform:
 
 1. To use the DB Event inbound endpoint, you need to download the inbound org.apache.synapse.dbevent.poll-1.0.0.jar from https://store.wso2.com and copy the jar to the <EI_HOME>/lib directory.
 
-2. Place the mysql-connector-java-5.1.38-bin.jar into the directory <EI_HOME>/lib.
+2. Place the mysql-connector-java-5.1.36-bin.jar into the directory <EI_HOME>/lib.
 
-2. Configuration:
-
+3. Configuration:
+```xml
 <inboundEndpoint xmlns="http://ws.apache.org/ns/synapse"
                  name="customIE"
                  sequence="request"
@@ -53,9 +53,10 @@ Tested Platform:
       <parameter name="registryPath">customIE/timestamp</parameter>
    </parameters>
 </inboundEndpoint>
+```
 
 1. driverName                - The class name of the database driver.
-2. url	                      - The JDBC URL of the database.
+2. url	                     - The JDBC URL of the database.
 3. username                  - The user name used to connect to the database.
 4. password                  - The password used to connect to the database.
 5. tableName                 - The name of the table to capture the change.
