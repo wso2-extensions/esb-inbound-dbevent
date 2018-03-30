@@ -16,21 +16,22 @@ Pre-requisites:
 
  - Maven 3.x
  - Java 1.6 or above
- - The JDBC driver e.g:mysql-connector-java-5.1.38-bin.jar.
+ - The JDBC driver e.g:mysql-connector-java-5.1.36-bin.jar.
 
 Tested Platform: 
 
  - Microsoft WINDOWS V-7
  - Mac OSX 10.11.6
+ - Ubuntu 16.04 TLS
  - wso2ei-6.1.1
- - Java 1.7
+ - Java 1.8
 
 1. To use the DB Event inbound endpoint, you need to download the inbound org.apache.synapse.dbevent.poll-1.0.0.jar from https://store.wso2.com and copy the jar to the <EI_HOME>/lib directory.
 
-2. Place the mysql-connector-java-5.1.38-bin.jar into the directory <EI_HOME>/lib.
+2. Place the mysql-connector-java-5.1.36-bin.jar into the directory <EI_HOME>/lib.
 
-2. Configuration:
-
+3. Configuration:
+```xml
 <inboundEndpoint xmlns="http://ws.apache.org/ns/synapse"
                  name="customIE"
                  sequence="request"
@@ -53,6 +54,7 @@ Tested Platform:
       <parameter name="registryPath">customIE/timestamp</parameter>
    </parameters>
 </inboundEndpoint>
+```
 
 1. driverName                - The class name of the database driver.
 2. url	                      - The JDBC URL of the database.
