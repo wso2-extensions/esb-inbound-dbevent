@@ -54,7 +54,7 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
     private MessageContext msgCtx;
     private String registryPath = null;
     private String inboundName = null;
-    private String primaryKeyFromConfig = null;
+    private String primaryKeyFromConfig = "";
     private String connectionValidationQuery = null;
     private String tableName = null;
 
