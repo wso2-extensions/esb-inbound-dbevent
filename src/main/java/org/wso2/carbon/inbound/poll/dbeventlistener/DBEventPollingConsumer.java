@@ -30,6 +30,7 @@ import org.wso2.carbon.base.MultitenantConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.inbound.endpoint.protocol.generic.GenericPollingConsumer;
 
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -169,7 +170,7 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
      * Execute the query to retrieve the records, create each record as OMElement and inject to the sequence
      */
     private void fetchDataAndInject() {
-        Statement statement = null;
+        PreparedStatement statement = null;
         ResultSet rs = null;
         String deleteQuery = null;
         String updateQuery = null;
@@ -183,7 +184,7 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
                 filteringColumnName, lastUpdatedTimestampFromRegistry);
         try {
             statement = connection.prepareStatement(dbScript);
-            rs = statement.executeQuery(dbScript);
+            rs = statement.executeQuery();
             ResultSetMetaData metaData = rs.getMetaData();
             while (rs.next()) {
                 if (filteringCriteria.equals(DBEventConstants.DB_DELETE_AFTER_POLL)) {
@@ -295,7 +296,7 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
             log.info("Building the SELECT query to fetch the data change.");
         }
         if (filteringCriteria.equals(DBEventConstants.DB_FILTERING_BY_TIMESTAMP)) {
-            return "SELECT * FROM " + tableName + " WHERE " + filteringColumnName + " >= '"
+            return "SELECT * FROM " + tableName + " WHERE " + filteringColumnName + " > '"
                     + lastUpdatedTimestampFromRegistry + "' ORDER BY " + filteringColumnName + " ASC ";
         } else if (filteringCriteria.equals(DBEventConstants.DB_FILTERING_BY_BOOLEAN)){
             return "SELECT * FROM " + tableName + " WHERE " + filteringColumnName + "='true'";
@@ -372,14 +373,14 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
         if (log.isDebugEnabled()) {
             log.info("Checking the connection status.");
         }
-        Statement statement = null;
+        PreparedStatement statement = null;
         ResultSet rs = null;
         try {
             if (connection == null || connection.isClosed()) {
                 createConnection();
             }
             statement = connection.prepareStatement(connectionValidationQuery);
-            rs = statement.executeQuery(connectionValidationQuery);
+            rs = statement.executeQuery();
             if(rs == null || rs.first()) {
                 return true;
             }

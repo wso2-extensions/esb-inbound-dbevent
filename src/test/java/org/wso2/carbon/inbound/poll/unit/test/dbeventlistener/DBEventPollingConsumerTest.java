@@ -90,7 +90,7 @@ public class DBEventPollingConsumerTest {
         String result = Whitebox
                 .invokeMethod(dbEventPollingConsumer, "buildQuery", "table1", "byLastUpdatedTimestampColumn", "column1",
                         "timestamp");
-        Assert.assertEquals(result, "SELECT * FROM table1 WHERE column1 >= 'timestamp' ORDER BY column1 ASC ");
+        Assert.assertEquals(result, "SELECT * FROM table1 WHERE column1 > 'timestamp' ORDER BY column1 ASC ");
     }
 
     @Test
