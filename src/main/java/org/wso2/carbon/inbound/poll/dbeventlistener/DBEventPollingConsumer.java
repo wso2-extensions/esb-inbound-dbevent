@@ -380,7 +380,7 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
             }
             statement = connection.prepareStatement(connectionValidationQuery);
             rs = statement.executeQuery(connectionValidationQuery);
-            if(rs == null || rs.first()) {
+            if (rs == null || rs.next()) {
                 return true;
             }
         } catch (SQLException e) {
