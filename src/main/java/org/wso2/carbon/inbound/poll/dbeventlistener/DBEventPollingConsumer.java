@@ -38,6 +38,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.Statement;
 import java.sql.DriverManager;
 import java.sql.Types;
+import java.sql.Clob;
 
 import java.util.Properties;
 
@@ -272,6 +273,10 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
                 columnValue = rs.getTime(columnName) + "";
             } else if (type == Types.TIMESTAMP) {
                 columnValue = rs.getTimestamp(columnName) + "";
+            } else if (type == Types.CLOB) {
+                Clob clob = rs.getClob(columnName);
+                // materialize CLOB data
+                columnValue = clob.getSubString(1, (int) clob.length());
             } else {
                 log.error("Unsupported column type " + type);
             }
