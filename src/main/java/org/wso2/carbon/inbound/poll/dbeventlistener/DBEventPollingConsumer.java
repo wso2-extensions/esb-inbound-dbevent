@@ -24,10 +24,11 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.synapse.MessageContext;
+import org.apache.synapse.carbonext.TenantInfoConfigurator;
 import org.apache.synapse.core.SynapseEnvironment;
+import org.apache.synapse.core.axis2.Axis2MessageContext;
 import org.apache.synapse.mediators.base.SequenceMediator;
 import org.wso2.carbon.base.MultitenantConstants;
-import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.inbound.endpoint.protocol.generic.GenericPollingConsumer;
 
 import java.sql.PreparedStatement;
@@ -35,16 +36,16 @@ import java.sql.SQLException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
-import java.sql.Statement;
 import java.sql.DriverManager;
 import java.sql.Types;
+import java.sql.Clob;
 
 import java.util.Properties;
 
 public class DBEventPollingConsumer extends GenericPollingConsumer {
 
     private static final Log log = LogFactory.getLog(DBEventPollingConsumer.class);
-    
+
     private String driverClass;
     private String dbURL;
     private String dbUsername;
@@ -71,7 +72,8 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
      * @param sequential
      */
     public DBEventPollingConsumer(Properties properties, String name, SynapseEnvironment synapseEnvironment,
-            long scanInterval, String injectingSeq, String onErrorSeq, boolean coordination, boolean sequential) {
+                                  long scanInterval, String injectingSeq, String onErrorSeq, boolean coordination,
+                                  boolean sequential) {
         super(properties, name, synapseEnvironment, scanInterval, injectingSeq, onErrorSeq, coordination, sequential);
         driverClass = properties.getProperty(DBEventConstants.DB_DRIVER);
         dbURL = properties.getProperty(DBEventConstants.DB_URL);
@@ -82,10 +84,10 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
         registryPath = properties.getProperty(DBEventConstants.REGISTRY_PATH);
         primaryKeyFromConfig = properties.getProperty(DBEventConstants.TABLE_PRIMARY_KEY);
         connectionValidationQuery = properties.getProperty(DBEventConstants.CONNECTION_VALIDATION_QUERY);
-        if(StringUtils.isEmpty(registryPath)) {
+        if (StringUtils.isEmpty(registryPath)) {
             registryPath = name;
         }
-        if(StringUtils.isEmpty(connectionValidationQuery)) {
+        if (StringUtils.isEmpty(connectionValidationQuery)) {
             connectionValidationQuery = "SELECT 1";
         }
         inboundName = name;
@@ -99,9 +101,9 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
      * @return status
      */
     private boolean inject(OMElement object, String deleteQuery, String updateQuery, String lastProcessedTimestamp) {
-        Statement statement = null;
+        PreparedStatement statement = null;
         String query = null;
-        DBEventRegistryHandler dbEventListnerRegistryHandler = new DBEventRegistryHandler();
+        DBEventRegistryHandler dbEventListnerRegistryHandler = new DBEventRegistryHandler(synapseEnvironment);
         msgCtx = createMessageContext();
         if (injectingSeq == null || injectingSeq.equals("")) {
             log.error("Sequence name not specified. Sequence : " + injectingSeq
@@ -125,16 +127,16 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
                 return false;
             } else {
                 if (filteringCriteria.equals(DBEventConstants.DB_FILTERING_BY_TIMESTAMP)) {
-                    dbEventListnerRegistryHandler.writeToRegistry(registryPath, lastProcessedTimestamp);
+                    dbEventListnerRegistryHandler.writeToRegistry(registryPath, lastProcessedTimestamp, false);
                 }
                 if (StringUtils.isNotEmpty(deleteQuery)) {
                     statement = connection.prepareStatement(deleteQuery);
                     query = deleteQuery;
-                    statement.execute(deleteQuery);
+                    statement.execute();
                 } else if (StringUtils.isNotEmpty(updateQuery)) {
                     statement = connection.prepareStatement(updateQuery);
                     query = updateQuery;
-                    statement.execute(updateQuery);
+                    statement.execute();
                 }
             }
         } catch (SQLException e) {
@@ -156,13 +158,12 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
             log.info("Creating message context.");
         }
         MessageContext msgCtx = synapseEnvironment.createMessageContext();
-        org.apache.axis2.context.MessageContext axis2MsgCtx = ((org.apache.synapse.core.axis2.Axis2MessageContext) msgCtx)
-                .getAxis2MessageContext();
+        org.apache.axis2.context.MessageContext axis2MsgCtx =
+                ((org.apache.synapse.core.axis2.Axis2MessageContext) msgCtx).getAxis2MessageContext();
         axis2MsgCtx.setServerSide(true);
         axis2MsgCtx.setMessageID(UUIDGenerator.getUUID());
         msgCtx.setProperty(org.apache.axis2.context.MessageContext.CLIENT_API_NON_BLOCKING, true);
-        PrivilegedCarbonContext carbonContext = PrivilegedCarbonContext.getThreadLocalCarbonContext();
-        axis2MsgCtx.setProperty(MultitenantConstants.TENANT_DOMAIN, carbonContext.getTenantDomain());
+        axis2MsgCtx.setProperty(MultitenantConstants.TENANT_DOMAIN, getTenantDomain());
         return msgCtx;
     }
 
@@ -175,10 +176,10 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
         String deleteQuery = null;
         String updateQuery = null;
         String lastProcessedTimestamp = null;
-        DBEventRegistryHandler dbEventListnerRegistryHandler = new DBEventRegistryHandler();
+        DBEventRegistryHandler dbEventListnerRegistryHandler = new DBEventRegistryHandler(synapseEnvironment);
         String lastUpdatedTimestampFromRegistry = null;
         if (filteringCriteria.equals(DBEventConstants.DB_FILTERING_BY_TIMESTAMP)) {
-            lastUpdatedTimestampFromRegistry = dbEventListnerRegistryHandler.readFromRegistry(registryPath).toString();
+            lastUpdatedTimestampFromRegistry = dbEventListnerRegistryHandler.readFromRegistry(registryPath);
         }
         String dbScript = buildQuery(tableName, filteringCriteria,
                 filteringColumnName, lastUpdatedTimestampFromRegistry);
@@ -224,7 +225,9 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
             log.error("Error while capturing the change data " + dbScript, e);
         } finally {
             try {
-                rs.close();
+                if (rs != null) {
+                    rs.close();
+                }
             } catch (SQLException e) {
                 log.error("Error while closing the result set.");
             }
@@ -272,6 +275,10 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
                 columnValue = rs.getTime(columnName) + "";
             } else if (type == Types.TIMESTAMP) {
                 columnValue = rs.getTimestamp(columnName) + "";
+            } else if (type == Types.CLOB) {
+                Clob clob = rs.getClob(columnName);
+                // materialize CLOB data
+                columnValue = clob.getSubString(1, (int) clob.length());
             } else {
                 log.error("Unsupported column type " + type);
             }
@@ -284,6 +291,7 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
 
     /**
      * Build the SELECT query as string
+     *
      * @param tableName
      * @param filteringCriteria
      * @param filteringColumnName
@@ -291,14 +299,14 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
      * @return query
      */
     private String buildQuery(String tableName, String filteringCriteria, String filteringColumnName,
-            String lastUpdatedTimestampFromRegistry) {
+                              String lastUpdatedTimestampFromRegistry) {
         if (log.isDebugEnabled()) {
             log.info("Building the SELECT query to fetch the data change.");
         }
         if (filteringCriteria.equals(DBEventConstants.DB_FILTERING_BY_TIMESTAMP)) {
             return "SELECT * FROM " + tableName + " WHERE " + filteringColumnName + " > '"
                     + lastUpdatedTimestampFromRegistry + "' ORDER BY " + filteringColumnName + " ASC ";
-        } else if (filteringCriteria.equals(DBEventConstants.DB_FILTERING_BY_BOOLEAN)){
+        } else if (filteringCriteria.equals(DBEventConstants.DB_FILTERING_BY_BOOLEAN)) {
             return "SELECT * FROM " + tableName + " WHERE " + filteringColumnName + "='true'";
         } else {
             return "SELECT * FROM " + tableName;
@@ -381,7 +389,8 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
             }
             statement = connection.prepareStatement(connectionValidationQuery);
             rs = statement.executeQuery();
-            if(rs == null || rs.first()) {
+
+            if (rs == null || rs.next()) {
                 return true;
             }
         } catch (SQLException e) {
@@ -402,5 +411,20 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
             }
         }
         return false;
+    }
+
+    private String getTenantDomain() {
+        TenantInfoConfigurator configurator = synapseEnvironment.getTenantInfoConfigurator();
+        if (configurator != null) {
+            org.apache.axis2.context.MessageContext axisMessageContext = new org.apache.axis2.context.MessageContext();
+            MessageContext messageContext = new Axis2MessageContext(axisMessageContext,
+                    synapseEnvironment.getSynapseConfiguration(), synapseEnvironment);
+            configurator.extractTenantInfo(messageContext);
+            if (messageContext.getProperty("tenant.info.domain") != null) {
+                return (String) messageContext.getProperty("tenant.info.domain");
+            }
+
+        }
+        return null;
     }
 }

@@ -16,18 +16,13 @@
 
 package org.wso2.carbon.inbound.poll.dbeventlistener;
 
+import org.apache.axiom.om.impl.llom.OMTextImpl;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wso2.carbon.inbound.endpoint.persistence.ServiceReferenceHolder;
-import org.wso2.carbon.registry.api.Registry;
-import org.wso2.carbon.registry.api.RegistryException;
-import org.wso2.carbon.registry.api.Resource;
+import org.apache.synapse.config.Entry;
+import org.apache.synapse.core.SynapseEnvironment;
+import org.apache.synapse.registry.AbstractRegistry;
 
-import java.io.ObjectInputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
@@ -36,92 +31,47 @@ import java.util.Calendar;
  */
 public class DBEventRegistryHandler {
     private static final Log log = LogFactory.getLog(DBEventRegistryHandler.class.getName());
-    private Resource resource;
-    private Registry registry;
+    private AbstractRegistry registry;
 
-    public DBEventRegistryHandler() {
-        try {
-            registry = ServiceReferenceHolder.getInstance().getRegistry();
-        } catch (RegistryException e) {
-            log.error("Error while accessing the registry", e);
-        }
+    public DBEventRegistryHandler(SynapseEnvironment synEnv) {
+        registry = (AbstractRegistry) synEnv.getSynapseConfiguration().getRegistry();
     }
 
-    public Object readFromRegistry(String resourcePath) {
+    public String readFromRegistry(String resourcePath) {
         if (log.isDebugEnabled()) {
             log.info("Reading the registry property from the path " + resourcePath);
         }
-        Object obj = null;
-        try {
-            if (registry.resourceExists(resourcePath)) {
-                resource = registry.get(resourcePath);
-                byte[] content = (byte[]) resource.getContent();
-                obj = toObject(content);
+
+        String obj = null;
+        if (registry != null) {
+            Object registryResource = registry.getResource(new Entry(resourcePath), null);
+            if (registryResource != null) {
+                obj = ((OMTextImpl) registryResource).getText();
             } else {
                 if (log.isDebugEnabled()) {
                     log.info("Getting the default timestamp as the property is not set in the registry.");
                 }
                 String defaultTimestamp = getDefaultTimestamp();
-                writeToRegistry(resourcePath, defaultTimestamp);
+                writeToRegistry(resourcePath, defaultTimestamp, true);
                 return defaultTimestamp;
             }
-        } catch (RegistryException e) {
-            log.error("Error while accessing the registry", e);
+        } else {
+            log.error("Error while accessing the registry");
         }
         return obj;
     }
 
-    private Object toObject(byte[] arrayDate) {
-        ByteArrayInputStream bis = new ByteArrayInputStream(arrayDate);
-        ObjectInputStream in = null;
-        try {
-            in = new ObjectInputStream(bis);
-            return in.readObject();
-        } catch (IOException e) {
-            log.error("Error while reading the registry property", e);
-        } catch (ClassNotFoundException e) {
-            log.error("Unable to access readObject method ", e);
-        } finally {
-            try {
-                in.close();
-                bis.close();
-            } catch (IOException e) {
-                log.error("Error while closing the registry stream", e);
-            }
-        }
-        return null;
-    }
-
-    private byte[] toByteArray(Object date) {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutputStream oos;
-        try {
-            oos = new ObjectOutputStream(bos);
-            oos.writeObject(date);
-            oos.flush();
-            oos.close();
-            bos.close();
-        } catch (IOException e) {
-            log.error("Error while reading the registry property", e);
-        }
-        return bos.toByteArray();
-    }
-
-    public void writeToRegistry(String resourceID, Object date) {
+    public void writeToRegistry(String resourceID, Object date, boolean isNew) {
         if (log.isDebugEnabled()) {
-            log.info("Reading the registry property "+ date +" to the path " + resourceID);
+            log.info("Reading the registry property " + date + " to the path " + resourceID);
         }
-        try {
-            resource = registry.newResource();
-            resource.setContent(toByteArray(date));
-            registry.put(resourceID, resource);
-        } catch (RegistryException e) {
-            log.error("Error while accessing the registry", e);
+        if (isNew) {
+            registry.newResource(resourceID, false);
         }
+        registry.updateResource(resourceID, date);
     }
 
     /**
-     *
      * @return default timestamp
      */
     private String getDefaultTimestamp() {
