@@ -304,7 +304,7 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
             log.info("Building the SELECT query to fetch the data change.");
         }
         if (filteringCriteria.equals(DBEventConstants.DB_FILTERING_BY_TIMESTAMP)) {
-            return "SELECT * FROM " + tableName + " WHERE " + filteringColumnName + " >= '"
+            return "SELECT * FROM " + tableName + " WHERE " + filteringColumnName + " > '"
                     + lastUpdatedTimestampFromRegistry + "' ORDER BY " + filteringColumnName + " ASC ";
         } else if (filteringCriteria.equals(DBEventConstants.DB_FILTERING_BY_BOOLEAN)) {
             return "SELECT * FROM " + tableName + " WHERE " + filteringColumnName + "='true'";
@@ -389,6 +389,7 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
             }
             statement = connection.prepareStatement(connectionValidationQuery);
             rs = statement.executeQuery();
+
             if (rs == null || rs.next()) {
                 return true;
             }
