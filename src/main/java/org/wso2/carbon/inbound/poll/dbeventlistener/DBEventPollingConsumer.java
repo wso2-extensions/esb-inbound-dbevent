@@ -278,7 +278,11 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
             } else if (type == Types.CLOB) {
                 Clob clob = rs.getClob(columnName);
                 // materialize CLOB data
-                columnValue = clob.getSubString(1, (int) clob.length());
+                if (null != clob) {
+                    columnValue = clob.getSubString(1, (int) clob.length());
+                } else {
+                    columnValue = null;
+                }
             } else {
                 log.error("Unsupported column type " + type);
             }
