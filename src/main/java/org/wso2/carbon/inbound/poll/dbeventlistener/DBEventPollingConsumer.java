@@ -29,6 +29,7 @@ import org.apache.synapse.core.SynapseEnvironment;
 import org.apache.synapse.core.axis2.Axis2MessageContext;
 import org.apache.synapse.mediators.base.SequenceMediator;
 import org.wso2.carbon.base.MultitenantConstants;
+import org.wso2.carbon.inbound.endpoint.protocol.generic.GenericConstants;
 import org.wso2.carbon.inbound.endpoint.protocol.generic.GenericPollingConsumer;
 
 import java.sql.PreparedStatement;
@@ -59,6 +60,7 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
     private String primaryKeyFromConfig = "";
     private String connectionValidationQuery = null;
     private String tableName = null;
+    private String name;
 
 
     /**
@@ -84,6 +86,7 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
         registryPath = properties.getProperty(DBEventConstants.REGISTRY_PATH);
         primaryKeyFromConfig = properties.getProperty(DBEventConstants.TABLE_PRIMARY_KEY);
         connectionValidationQuery = properties.getProperty(DBEventConstants.CONNECTION_VALIDATION_QUERY);
+        this.name = name;
         if (StringUtils.isEmpty(registryPath)) {
             registryPath = name;
         }
@@ -105,6 +108,7 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
         String query = null;
         DBEventRegistryHandler dbEventListnerRegistryHandler = new DBEventRegistryHandler(synapseEnvironment);
         msgCtx = createMessageContext();
+        msgCtx.setProperty("inbound.endpoint.name", name);
         if (injectingSeq == null || injectingSeq.equals("")) {
             log.error("Sequence name not specified. Sequence : " + injectingSeq
                     + " in the inbound endpoint configuration " + inboundName);
