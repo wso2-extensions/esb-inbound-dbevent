@@ -59,8 +59,6 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
     private String primaryKeyFromConfig = "";
     private String connectionValidationQuery = null;
     private String tableName = null;
-    private String epName;
-
 
     /**
      * @param properties
@@ -85,7 +83,6 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
         registryPath = properties.getProperty(DBEventConstants.REGISTRY_PATH);
         primaryKeyFromConfig = properties.getProperty(DBEventConstants.TABLE_PRIMARY_KEY);
         connectionValidationQuery = properties.getProperty(DBEventConstants.CONNECTION_VALIDATION_QUERY);
-        this.epName = name;
         if (StringUtils.isEmpty(registryPath)) {
             registryPath = name;
         }
@@ -107,7 +104,7 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
         String query = null;
         DBEventRegistryHandler dbEventListnerRegistryHandler = new DBEventRegistryHandler(synapseEnvironment);
         msgCtx = createMessageContext();
-        msgCtx.setProperty(DBEventConstants.INBOUND_ENDPOINT_NAME, epName);
+        msgCtx.setProperty(DBEventConstants.INBOUND_ENDPOINT_NAME, inboundName);
         if (injectingSeq == null || injectingSeq.equals("")) {
             log.error("Sequence name not specified. Sequence : " + injectingSeq
                     + " in the inbound endpoint configuration " + inboundName);
