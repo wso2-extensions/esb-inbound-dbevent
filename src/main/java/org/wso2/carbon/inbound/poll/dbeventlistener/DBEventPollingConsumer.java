@@ -60,7 +60,6 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
     private String connectionValidationQuery = null;
     private String tableName = null;
 
-
     /**
      * @param properties
      * @param name
@@ -105,6 +104,7 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
         String query = null;
         DBEventRegistryHandler dbEventListnerRegistryHandler = new DBEventRegistryHandler(synapseEnvironment);
         msgCtx = createMessageContext();
+        msgCtx.setProperty(DBEventConstants.INBOUND_ENDPOINT_NAME, inboundName);
         if (injectingSeq == null || injectingSeq.equals("")) {
             log.error("Sequence name not specified. Sequence : " + injectingSeq
                     + " in the inbound endpoint configuration " + inboundName);
