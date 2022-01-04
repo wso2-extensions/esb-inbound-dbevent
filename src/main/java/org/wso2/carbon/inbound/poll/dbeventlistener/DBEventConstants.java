@@ -32,6 +32,9 @@ public class DBEventConstants {
     public static final String REGISTRY_PATH = "registryPath";
     public static final String TABLE_PRIMARY_KEY = "primaryKey";
     public static final String CONNECTION_VALIDATION_QUERY = "connectionValidationQuery";
+    /**
+     * See https://github.com/wso2-extensions/esb-inbound-dbevent/issues/25
+     */
     public static final String INBOUND_ENDPOINT_NAME = "inbound.endpoint.name";
 }
 
