@@ -17,14 +17,18 @@
 package org.wso2.carbon.inbound.poll.dbeventlistener;
 
 import org.apache.axiom.om.impl.llom.OMTextImpl;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.synapse.config.Entry;
 import org.apache.synapse.core.SynapseEnvironment;
 import org.apache.synapse.registry.AbstractRegistry;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
+import java.util.Properties;
 
 /**
  * Read/Write operations with registry
@@ -32,9 +36,15 @@ import java.util.Calendar;
 public class DBEventRegistryHandler {
     private static final Log log = LogFactory.getLog(DBEventRegistryHandler.class.getName());
     private AbstractRegistry registry;
+    private String REGISTRY_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
+    private String REGISTRY_TIME_FORMAT_OLD = "yyyy-MM-dd HH:mm:ss";
 
-    public DBEventRegistryHandler(SynapseEnvironment synEnv) {
+    public DBEventRegistryHandler(SynapseEnvironment synEnv, Properties properties) {
         registry = (AbstractRegistry) synEnv.getSynapseConfiguration().getRegistry();
+        String newFormat = (String) properties.get(DBEventConstants.REGISTRY_TIME_FORMAT);
+        if (!StringUtils.isEmpty(newFormat)) {
+            REGISTRY_TIME_FORMAT = newFormat;
+        }
     }
 
     public String readFromRegistry(String resourcePath) {
@@ -47,6 +57,24 @@ public class DBEventRegistryHandler {
             Object registryResource = registry.getResource(new Entry(resourcePath), null);
             if (registryResource != null) {
                 obj = ((OMTextImpl) registryResource).getText();
+                //Here we need to see if there is an entry with old time format if so we need to convert to
+                // new time format
+                Date date;
+                try {
+                    date = new SimpleDateFormat(REGISTRY_TIME_FORMAT_OLD).parse(obj);
+                    long millis = date.getTime() + 1000; //Add a second to overcome nanosecond loss
+                    Date res = new Date(millis);
+                    obj = new SimpleDateFormat(REGISTRY_TIME_FORMAT).format(res);
+                } catch (ParseException e) {
+                    // This means that the date is on previous format. So we need to change the format
+                    try {
+                        date = new SimpleDateFormat(REGISTRY_TIME_FORMAT).parse(obj);
+                        obj = new SimpleDateFormat(REGISTRY_TIME_FORMAT).format(date);
+                    } catch (ParseException ex) {
+                        log.error("Error while parsing the registry entry ", ex);
+                    }
+                }
+
             } else {
                 if (log.isDebugEnabled()) {
                     log.info("Getting the default timestamp as the property is not set in the registry.");
@@ -76,8 +104,8 @@ public class DBEventRegistryHandler {
      */
     private String getDefaultTimestamp() {
         Calendar cal = Calendar.getInstance();
-        SimpleDateFormat sdf = new SimpleDateFormat(DBEventConstants.REGISTRY_TIME_FORMAT);
-        cal.add(Calendar.MONTH, -1);
+        SimpleDateFormat sdf = new SimpleDateFormat(REGISTRY_TIME_FORMAT);
+        cal.add(Calendar.MONTH, 0);
         return sdf.format(cal.getTime());
     }
 }

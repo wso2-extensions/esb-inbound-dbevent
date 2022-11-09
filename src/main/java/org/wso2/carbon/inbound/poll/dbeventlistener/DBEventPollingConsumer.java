@@ -61,6 +61,7 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
     private String tableName = null;
 
 
+
     /**
      * @param properties
      * @param name
@@ -103,7 +104,7 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
     private boolean inject(OMElement object, String deleteQuery, String updateQuery, String lastProcessedTimestamp) {
         PreparedStatement statement = null;
         String query = null;
-        DBEventRegistryHandler dbEventListnerRegistryHandler = new DBEventRegistryHandler(synapseEnvironment);
+        DBEventRegistryHandler dbEventListnerRegistryHandler = new DBEventRegistryHandler(synapseEnvironment, properties);
         msgCtx = createMessageContext();
         msgCtx.setProperty(DBEventConstants.INBOUND_ENDPOINT_NAME, inboundName);
         if (injectingSeq == null || injectingSeq.equals("")) {
@@ -177,7 +178,7 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
         String deleteQuery = null;
         String updateQuery = null;
         String lastProcessedTimestamp = null;
-        DBEventRegistryHandler dbEventListnerRegistryHandler = new DBEventRegistryHandler(synapseEnvironment);
+        DBEventRegistryHandler dbEventListnerRegistryHandler = new DBEventRegistryHandler(synapseEnvironment, properties);
         String lastUpdatedTimestampFromRegistry = null;
         if (filteringCriteria.equals(DBEventConstants.DB_FILTERING_BY_TIMESTAMP)) {
             lastUpdatedTimestampFromRegistry = dbEventListnerRegistryHandler.readFromRegistry(registryPath);
@@ -310,7 +311,7 @@ public class DBEventPollingConsumer extends GenericPollingConsumer {
         }
         if (filteringCriteria.equals(DBEventConstants.DB_FILTERING_BY_TIMESTAMP)) {
             return "SELECT * FROM " + tableName + " WHERE " + filteringColumnName + " > '"
-                    + lastUpdatedTimestampFromRegistry + "' ORDER BY " + filteringColumnName + " ASC ";
+                    + lastUpdatedTimestampFromRegistry + "' ORDER BY " + filteringColumnName + " ASC";
         } else if (filteringCriteria.equals(DBEventConstants.DB_FILTERING_BY_BOOLEAN)) {
             return "SELECT * FROM " + tableName + " WHERE " + filteringColumnName + "='true'";
         } else {

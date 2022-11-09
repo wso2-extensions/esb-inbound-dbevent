@@ -23,11 +23,11 @@ public class DBEventConstants {
     public static final String DB_DRIVER = "driverName";
     public static final String DB_TABLE = "tableName";
     public static final String DB_FILTERING_CRITERIA = "filteringCriteria";
+    public static final String REGISTRY_TIME_FORMAT = "registryTimeFormat";
     public static final String DB_FILTERING_COLUMN_NAME = "filteringColumnName";
     public static final String DB_FILTERING_BY_TIMESTAMP = "byLastUpdatedTimestampColumn";
     public static final String DB_FILTERING_BY_BOOLEAN = "byBooleanColumn";
     public static final String DB_DELETE_AFTER_POLL = "deleteAfterPoll";
-    public static final String REGISTRY_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
     public static final String SET_ROLLBACK_ONLY = "SET_DB_ROLLBACK_ONLY";
     public static final String REGISTRY_PATH = "registryPath";
     public static final String TABLE_PRIMARY_KEY = "primaryKey";
