@@ -9,5 +9,16 @@
         "Capture-Data-Change",
         "Technology"
     ],
-    "releases": []
+    "releases": [
+        {
+            "tagName": "1.0.6",
+            "products": [
+                "EI 7.0.x",
+                "EI 6.6.0",
+                "EI 6.5.0",
+                "EI 6.4.0",
+                "EI 6.1.1"
+            ]
+        }
+    ]
 }
