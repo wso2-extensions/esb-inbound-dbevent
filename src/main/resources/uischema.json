@@ -1,0 +1,148 @@
+{
+  "name": "dbEventInbound",
+  "type": "inbound-connector",
+  "title": "Database Event Inbound Connector",
+  "help": "Configure the database event inbound connector to poll a database for changes and process them accordingly.",
+  "elements": [
+    {
+      "type": "attribute",
+      "value": {
+        "name": "username",
+        "displayName": "DB Username",
+        "inputType": "string",
+        "required": "true",
+        "helpTip": "Username for database authentication."
+      }
+    },
+    {
+      "type": "attribute",
+      "value": {
+        "name": "password",
+        "displayName": "DB Password",
+        "inputType": "string",
+        "required": "true",
+        "helpTip": "Password for database authentication."
+      }
+    },
+    {
+      "type": "attribute",
+      "value": {
+        "name": "url",
+        "displayName": "DB URL",
+        "inputType": "string",
+        "required": "true",
+        "helpTip": "JDBC URL for connecting to the database."
+      }
+    },
+    {
+      "type": "attribute",
+      "value": {
+        "name": "driverName",
+        "displayName": "DB Driver",
+        "inputType": "string",
+        "required": "true",
+        "helpTip": "Fully qualified class name of the JDBC driver."
+      }
+    },
+    {
+      "type": "attribute",
+      "value": {
+        "name": "tableName",
+        "displayName": "DB Table",
+        "inputType": "string",
+        "required": "true",
+        "helpTip": "Name of the database table to poll."
+      }
+    },
+    {
+      "type": "attribute",
+      "value": {
+        "name": "filteringCriteria",
+        "displayName": "DB Filtering Criteria",
+        "inputType": "string",
+        "required": "false",
+        "helpTip": "Custom criteria to filter records during polling."
+      }
+    },
+    {
+      "type": "attribute",
+      "value": {
+        "name": "filteringColumnName",
+        "displayName": "Filtering Column Name",
+        "inputType": "string",
+        "required": "false",
+        "helpTip": "Name of the column used for filtering records."
+      }
+    },
+    {
+      "type": "attribute",
+      "value": {
+        "name": "byLastUpdatedTimestampColumn",
+        "displayName": "Filter by Timestamp",
+        "inputType": "boolean",
+        "required": "false",
+        "helpTip": "Set to true to enable filtering based on a timestamp column."
+      }
+    },
+    {
+      "type": "attribute",
+      "value": {
+        "name": "byBooleanColumn",
+        "displayName": "Filter by Boolean",
+        "inputType": "boolean",
+        "required": "false",
+        "helpTip": "Set to true to enable filtering based on a Boolean column."
+      }
+    },
+    {
+      "type": "attribute",
+      "value": {
+        "name": "deleteAfterPoll",
+        "displayName": "Delete After Poll",
+        "inputType": "boolean",
+        "required": "false",
+        "helpTip": "Set to true to delete records after they have been polled."
+      }
+    },
+    {
+      "type": "attribute",
+      "value": {
+        "name": "SET_DB_ROLLBACK_ONLY",
+        "displayName": "Set Rollback Only",
+        "inputType": "boolean",
+        "required": "false",
+        "helpTip": "Set to true to mark the transaction as rollback only in case of failure."
+      }
+    },
+    {
+      "type": "attribute",
+      "value": {
+        "name": "primaryKey",
+        "displayName": "Table Primary Key",
+        "inputType": "string",
+        "required": "false",
+        "helpTip": "Primary key of the table."
+      }
+    },
+    {
+      "type": "attribute",
+      "value": {
+        "name": "connectionValidationQuery",
+        "displayName": "Connection Validation Query",
+        "inputType": "string",
+        "required": "false",
+        "helpTip": "SQL query to validate connections from the connection pool."
+      }
+    },
+    {
+      "type": "attribute",
+      "value": {
+        "name": "inbound.endpoint.name",
+        "displayName": "Inbound Endpoint Name",
+        "inputType": "string",
+        "required": "true",
+        "helpTip": "Unique name for the inbound endpoint."
+      }
+    }
+  ]
+}
