@@ -2,7 +2,7 @@
     "name": "DB Event Listener (Inbound)",
     "owner": "WSO2",
     "category": "Inbound Endpoint",
-    "documentationUrl": "",
+    "documentationUrl": "https://mi.docs.wso2.com/en/latest/reference/connectors/db-event-inbound-endpoint/db-event-inbound-endpoint-overview/",
     "description": "The DB event listener is an inbound endpoint which is used to capture the data change in a database table. It will trigger an event with captured information about the change into WSO2 EI mediation flow.  ",
     "status": "Active",
     "labels": [
@@ -12,11 +12,6 @@
         {
             "tagName": "v1.0.6",
             "products": [
-                "EI 7.0.x",
-                "EI 6.6.0",
-                "EI 6.5.0",
-                "EI 6.4.0",
-                "EI 6.1.1",
                 "MI 4.x.x"
             ],
             "isHidden": false
